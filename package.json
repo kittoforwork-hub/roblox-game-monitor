@@ -1,0 +1,12 @@
+{
+  "name": "roblox-game-monitor",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Basic Roblox game status monitor using Cloudflare Workers and static assets",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.2"
+  }
+}
