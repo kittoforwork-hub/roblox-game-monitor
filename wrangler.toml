@@ -1,0 +1,23 @@
+name = "roblox-live-console"
+main = "worker/index.js"
+compatibility_date = "2026-10-26"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "roblox-monitor-db"
+database_id = "REPLACE_AFTER_CREATING_D1"
+migrations_dir = "migrations"
+
+[vars]
+APP_VERSION = "2.0.0"
+MAX_TRACKED_GAMES = "10"
+API_REQUEST_LIMIT = "50"
+
+[triggers]
+crons = ["17 * * * *"]

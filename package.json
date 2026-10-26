@@ -1,12 +1,11 @@
 {
-  "name": "roblox-game-monitor",
+  "name": "roblox-live-console",
+  "version": "2.0.0",
   "private": true,
-  "version": "1.0.0",
-  "description": "Basic Roblox game status monitor using Cloudflare Workers and static assets",
+  "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy"
-  },
-  "devDependencies": {
-    "wrangler": "^4.151.2"
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "test": "node tests/worker-smoke.mjs"
   }
 }
