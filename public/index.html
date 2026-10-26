@@ -3,156 +3,138 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1017">
-  <meta name="description" content="Roblox Game Monitor — แดชบอร์ดติดตามสถานะเกม จำนวนผู้เล่นออนไลน์ และแนวโน้มจากข้อมูลสาธารณะ">
-  <title>Roblox Monitor — Live Console</title>
+  <meta name="theme-color" content="#090d12">
+  <meta name="description" content="Roblox Live Operations Console — ติดตามข้อมูลเกมสาธารณะ แนวโน้มผู้เล่น และประวัติการตรวจสอบ">
+  <title>Roblox Monitor — Live Operations</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
 </head>
 <body>
-  <div class="app-shell" id="top">
+  <div class="app-frame" id="top">
     <header class="topbar">
-      <a class="brand" href="#top" aria-label="Roblox Monitor หน้าแรก">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 40 40"><path d="M11 7 33 12 28 34 6 28Z" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="m17 16 7 2-2 7-7-2Z" fill="currentColor"/></svg>
-        </span>
-        <span class="brand-copy"><strong>ROBLOX <span>/</span> MONITOR</strong><small>LIVE MONITORING CONSOLE</small></span>
+      <a class="brand" href="#top" aria-label="Roblox Monitor overview">
+        <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M11 7 33 12 28 34 6 28Z" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="m17 16 7 2-2 7-7-2Z" fill="currentColor"/></svg></span>
+        <span class="brand-copy"><strong>ROBLOX <i>/</i> MONITOR</strong><small>LIVE OPERATIONS CONSOLE</small></span>
       </a>
       <div class="topbar-right">
-        <span class="environment-tag"><span class="environment-dot"></span> PUBLIC DATA</span>
-        <span class="topbar-divider" aria-hidden="true"></span>
-        <span class="version-tag">CONSOLE <b>1.3</b></span>
+        <span class="env-pill"><i class="status-dot" id="systemStatusDot"></i><span id="systemStatusText">กำลังตรวจสอบระบบ</span></span>
+        <span class="top-divider"></span>
+        <span class="build-tag">BUILD <b>2.0</b></span>
       </div>
     </header>
 
-    <div class="workspace-layout">
-      <aside class="sidebar" aria-label="เมนูแดชบอร์ด">
-        <div class="sidebar-label">WORKSPACE</div>
-        <nav class="side-nav">
-          <a class="nav-item is-active" href="#workspace"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span><span>ภาพรวม</span><span class="nav-trailing">01</span></a>
-          <a class="nav-item" href="#live-analytics"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 6-7"/></svg></span><span>Live analytics</span></a>
-          <a class="nav-item" href="#game-metadata"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>ข้อมูลเกม</span></a>
-          <a class="nav-item" href="#recent-activity"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>ประวัติการตรวจสอบ</span></a>
+    <div class="workspace">
+      <aside class="sidebar" aria-label="เมนูหลัก">
+        <div class="sidebar-section-label">WORKSPACE</div>
+        <nav class="sidebar-nav">
+          <a class="nav-link active" href="#overview"><span class="nav-glyph"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="8" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span><span>ภาพรวม</span><span class="nav-index">01</span></a>
+          <a class="nav-link" href="#trackedGamesSection"><span class="nav-glyph"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M9 8v4M15 10h.01M17.5 13h.01"/></svg></span><span>เกมที่ติดตาม</span><span class="nav-count" id="trackedCountBadge">0</span></a>
+          <a class="nav-link" href="#live-analytics"><span class="nav-glyph"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 6-7"/></svg></span><span>Analytics</span></a>
+          <a class="nav-link" href="#recent-activity"><span class="nav-glyph"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>ประวัติระบบ</span></a>
+          <a class="nav-link" href="#system-notes"><span class="nav-glyph"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7h.01"/></svg></span><span>ขอบเขตข้อมูล</span></a>
         </nav>
-
-        <div class="sidebar-divider"></div>
-        <div class="sidebar-label">DATA ACCESS</div>
-        <div class="sidebar-info-card">
-          <span class="sidebar-info-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-          <strong>Public API only</strong>
-          <p>อ่านข้อมูลที่ Roblox เปิดเผยต่อสาธารณะ โดยไม่ต้องเชื่อมบัญชีผู้ใช้</p>
-          <span class="access-status"><i></i> READ-ONLY ACCESS</span>
+        <div class="sidebar-rule"></div>
+        <div class="sidebar-section-label">DATA SOURCE</div>
+        <div class="source-card">
+          <span class="source-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <strong>Public data only</strong>
+          <p>อ่านข้อมูลสาธารณะจาก Roblox โดยไม่ต้องใช้บัญชีหรือคุกกี้เข้าสู่ระบบ</p>
+          <span class="readonly"><i></i> READ-ONLY</span>
         </div>
-        <div class="sidebar-bottom-note"><span class="sidebar-bottom-dot"></span><span>MONITORING WORKSPACE<br><b>Personal session</b></span></div>
+        <div class="sidebar-bottom"><span class="sidebar-bottom-mark"></span><span>WORKSPACE MODE<br><b id="storageMode">กำลังตรวจสอบพื้นที่จัดเก็บ</b></span></div>
       </aside>
 
       <main class="main-content">
-        <section class="page-intro" id="workspace">
-          <div class="breadcrumb"><span>WORKSPACE</span><span class="breadcrumb-slash">/</span><strong>OVERVIEW</strong></div>
-          <div class="page-title-row">
+        <section class="page-intro" id="overview">
+          <div class="breadcrumb"><span>WORKSPACE</span><span class="slash">/</span><b>LIVE OVERVIEW</b></div>
+          <div class="intro-row">
             <div>
-              <p class="page-kicker">ROBLOX EXPERIENCE ANALYTICS</p>
-              <h1>Live overview<span class="title-period">.</span></h1>
-              <p class="page-subtitle">ติดตามจำนวนผู้เล่น สถานะเซิร์ฟเวอร์ และแนวโน้มของเกมจากจุดตรวจสอบเดียว</p>
+              <p class="eyebrow">ROBLOX EXPERIENCE ANALYTICS</p>
+              <h1>Operations overview<span>.</span></h1>
+              <p class="subtitle">ติดตามสถานะเกม แนวโน้มผู้เล่น และเหตุการณ์สำคัญจากหน้าจอเดียว</p>
             </div>
-            <div class="page-status-block">
-              <span class="ready-indicator"><i></i> READY TO MONITOR</span>
-              <span class="page-status-caption">อาศัยข้อมูลสาธารณะจาก Roblox</span>
+            <div class="system-summary">
+              <span class="system-summary-top"><i class="status-dot" id="summaryStatusDot"></i><b id="summaryStatus">READY TO MONITOR</b></span>
+              <span class="system-summary-caption" id="lastSuccessfulCheck">รอการตรวจสอบครั้งแรก</span>
             </div>
           </div>
         </section>
 
-        <section class="search-section" aria-label="ค้นหาเกม Roblox">
-          <div class="search-heading">
-            <div class="search-title-group"><span class="section-overline">NEW MONITOR</span><h2>เพิ่มเกมเพื่อตรวจสอบ</h2></div>
-            <span class="step-badge"><span class="step-number">01</span> GAME IDENTIFIER</span>
+        <section class="panel add-panel" aria-label="เพิ่มเกมเพื่อตรวจสอบ">
+          <div class="panel-heading compact-heading">
+            <div><span class="overline">MONITOR SETUP</span><h2>เพิ่มเกมเข้าสู่ Workspace</h2></div>
+            <span class="step-tag"><b>01</b> / PLACE ID</span>
           </div>
           <form id="gameForm" class="search-row">
-            <label class="input-wrap" for="placeId">
-              <span class="input-prefix">ID</span>
-              <input id="placeId" inputmode="numeric" autocomplete="off" placeholder="วาง Roblox Place ID หรือ URL ของเกม" aria-describedby="id-help">
-              <span class="input-hint-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/></svg></span>
-            </label>
-            <button id="checkBtn" type="submit"><span class="button-spinner" aria-hidden="true"></span><span class="button-label">เริ่มตรวจสอบ</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+            <label class="input-shell" for="placeId"><span class="input-prefix">ID</span><input id="placeId" name="placeId" inputmode="numeric" autocomplete="off" placeholder="วาง Roblox Place ID หรือ URL ของเกม" aria-describedby="id-help"><span class="input-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/></svg></span></label>
+            <button id="checkBtn" class="primary-button" type="submit"><span class="button-spinner" aria-hidden="true"></span><span class="button-label">เพิ่มและตรวจสอบ</span><span class="button-arrow" aria-hidden="true">↗</span></button>
           </form>
-          <div class="search-footer"><span id="id-help">ระบบจะอ่าน Place ID จากลิงก์ให้อัตโนมัติ หากใส่ URL เกม Roblox</span><span class="secure-note"><i></i> NO ROBLOX LOGIN REQUIRED</span></div>
+          <div class="search-footer"><span id="id-help">รองรับ Place ID หรือลิงก์เกม Roblox ระบบจะดึง ID ให้อัตโนมัติ</span><span class="secure-note"><i></i> NO ROBLOX LOGIN</span></div>
           <div id="recentGames" class="recent-games hidden" aria-label="เกมที่ตรวจสอบล่าสุด"></div>
         </section>
 
         <div id="message" class="message" role="status" aria-live="polite"><span class="message-indicator"></span><span class="message-text">ใส่ Place ID หรือ URL เพื่อเริ่มตรวจสอบเกม</span></div>
 
+        <section id="trackedGamesSection" class="tracked-section">
+          <div class="section-toolbar">
+            <div class="section-title"><span class="overline">TRACKED EXPERIENCES</span><h2>เกมที่ติดตาม <span class="muted-count" id="trackedGameCount">0 / 10</span></h2><p>รายการเกมที่บันทึกไว้ในเบราว์เซอร์นี้</p></div>
+            <div class="section-actions"><label class="threshold-control" for="playerThreshold"><span>แจ้งเตือนเมื่อผู้เล่นถึง</span><input id="playerThreshold" type="number" min="1" max="100000000" step="1" value="100"><span>คน</span></label><button class="secondary-button" id="notificationsToggle" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>เปิดแจ้งเตือน</span></button></div>
+          </div>
+          <div id="trackedGamesGrid" class="tracked-grid"><div class="empty-tracked"><span class="empty-symbol">＋</span><strong>ยังไม่มีเกมใน Workspace</strong><p>เพิ่ม Place ID ด้านบนเพื่อเริ่มติดตามเกมและเก็บประวัติ</p></div></div>
+          <div class="tracked-footer"><span id="trackingStatus">ระบบจะตรวจสอบเกมในรายการตามรอบอัปเดตที่เลือก</span><button id="clearTrackedGames" class="text-button" type="button">ล้างรายการทั้งหมด</button></div>
+        </section>
+
         <section id="results" class="results hidden" aria-live="polite">
-          <div class="results-toolbar">
-            <div class="results-label"><span class="section-overline">LIVE TELEMETRY</span><span class="toolbar-subtitle">ภาพรวมข้อมูลเกมที่ตรวจสอบได้</span></div>
-            <div class="toolbar-controls">
-              <span class="auto-refresh-label"><i class="pulse-dot"></i><span id="countdown">พร้อมอัปเดต</span></span>
-              <label class="interval-control" for="refreshInterval"><span>อัปเดตทุก</span><select id="refreshInterval"><option value="60" selected>60 วินาที</option><option value="120">2 นาที</option><option value="300">5 นาที</option></select></label>
-              <button id="refreshNow" class="icon-button" type="button" aria-label="รีเฟรชข้อมูลตอนนี้" title="รีเฟรชข้อมูลตอนนี้"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 9A6.5 6.5 0 0 1 17 6.5L20 12M4 12l3 5.5A6.5 6.5 0 0 0 17.9 15"/></svg></button>
-            </div>
+          <div class="section-toolbar result-toolbar">
+            <div class="section-title"><span class="overline">LIVE TELEMETRY</span><h2>รายละเอียดเกมที่เลือก</h2><p>สถิติล่าสุดจาก Roblox Public API</p></div>
+            <div class="live-controls"><span class="refresh-countdown"><i class="pulse-dot"></i><span id="countdown">รอการอัปเดต</span></span><label class="select-control" for="refreshInterval"><span>รอบ</span><select id="refreshInterval"><option value="60" selected>60 วินาที</option><option value="120">2 นาที</option><option value="300">5 นาที</option></select></label><button id="refreshNow" class="icon-button" type="button" aria-label="ตรวจสอบเดี๋ยวนี้" title="ตรวจสอบเดี๋ยวนี้"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 9A6.5 6.5 0 0 1 17 6.5L20 12M4 12l3 5.5A6.5 6.5 0 0 0 17.9 15"/></svg></button></div>
           </div>
 
-          <section class="game-heading card" id="game-overview">
+          <section class="game-heading panel">
             <div class="game-avatar" id="gameAvatar"><span id="gameAvatarLetter">R</span><img id="gameIcon" alt="" class="hidden"></div>
-            <div class="game-title-wrap">
-              <div class="label-line"><span id="publicStatus" class="status-pill"><i></i> PUBLIC STATUS</span><span id="refreshedAt" class="updated">รอข้อมูล</span></div>
-              <h2 id="gameName">—</h2><p id="gameCreator">รอข้อมูลผู้สร้างเกม</p>
-            </div>
-            <div class="game-actions"><a id="openGame" class="open-game" href="#" target="_blank" rel="noopener noreferrer">เปิดหน้าเกม <span>↗</span></a><div id="playerPulse" class="player-pulse" aria-label="สถานะการตรวจสอบ"><span></span><span></span><span></span></div></div>
+            <div class="game-title-wrap"><div class="label-line"><span id="publicStatus" class="status-pill"><i></i> PUBLIC STATUS</span><span id="refreshedAt" class="updated">รอข้อมูล</span></div><h2 id="gameName">—</h2><p id="gameCreator">รอข้อมูลผู้สร้างเกม</p></div>
+            <div class="game-actions"><a id="openGame" class="open-game" href="#" target="_blank" rel="noopener noreferrer">เปิดหน้าเกม <span>↗</span></a><span id="playerPulse" class="player-pulse" aria-label="สถานะการตรวจสอบ"><i></i><i></i><i></i></span></div>
           </section>
 
           <div class="stats-grid" id="live-stats">
-            <article class="stat-card card stat-online"><div class="stat-top"><span class="stat-label"><i class="tiny-live-dot"></i> ผู้เล่นออนไลน์</span><span class="stat-icon green"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"/></svg></span></div><div id="playing" class="stat-number" data-value="0">—</div><div class="stat-foot"><span class="trend-up">LIVE</span><span>จำนวนผู้เล่น ณ เวลาที่ตรวจสอบ</span></div><div class="stat-card-bottom"><span>LIVE PLAYER COUNT</span><span class="stat-mini-line" aria-hidden="true"></span></div></article>
-            <article class="stat-card card"><div class="stat-top"><span class="stat-label">ผู้เล่นสูงสุด / เซิร์ฟเวอร์</span><span class="stat-icon blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg></span></div><div id="maxPlayers" class="stat-number" data-value="0">—</div><div class="stat-foot"><span>ความจุสูงสุดต่อเซิร์ฟเวอร์</span></div><div class="stat-card-bottom"><span>SERVER LIMIT</span><span class="stat-mini-line blue-line" aria-hidden="true"></span></div></article>
-            <article class="stat-card card"><div class="stat-top"><span class="stat-label">ยอดเข้าเล่นสะสม</span><span class="stat-icon violet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36M3 4v5h5M12 7v5l3 2"/></svg></span></div><div id="visits" class="stat-number" data-value="0">—</div><div class="stat-foot"><span>ยอดเข้าชมสะสมตามข้อมูล Roblox</span></div><div class="stat-card-bottom"><span>TOTAL VISITS</span><span class="stat-mini-line violet-line" aria-hidden="true"></span></div></article>
-            <article class="stat-card card stat-capacity"><div class="stat-top"><span class="stat-label">การใช้ความจุเซิร์ฟเวอร์</span><span class="stat-icon amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16V4"/></svg></span></div><div class="capacity-readout"><div id="capacityPercent" class="stat-number" data-value="0">—</div><span>ใช้งาน</span></div><div class="capacity-track"><span id="capacityFill"></span></div><div id="capacityCaption" class="stat-foot">รอข้อมูลความจุ</div><div class="stat-card-bottom"><span>CAPACITY UTILIZATION</span><span class="stat-mini-line amber-line" aria-hidden="true"></span></div></article>
+            <article class="stat-card panel stat-online"><div class="stat-top"><span class="stat-label"><i class="tiny-live-dot"></i> ผู้เล่นออนไลน์</span><span class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"/></svg></span></div><div id="playing" class="stat-number" data-value="0">—</div><div class="stat-foot"><span class="live-tag">LIVE</span><span>จำนวนผู้เล่น ณ เวลาที่ตรวจสอบ</span></div><div class="stat-bottom-label"><span>LIVE PLAYER COUNT</span><span class="stat-mini-line"></span></div></article>
+            <article class="stat-card panel"><div class="stat-top"><span class="stat-label">ผู้เล่นสูงสุด / เซิร์ฟเวอร์</span><span class="stat-icon blue"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg></span></div><div id="maxPlayers" class="stat-number" data-value="0">—</div><div class="stat-foot">ความจุสูงสุดต่อเซิร์ฟเวอร์</div><div class="stat-bottom-label"><span>SERVER LIMIT</span><span class="stat-mini-line blue-line"></span></div></article>
+            <article class="stat-card panel"><div class="stat-top"><span class="stat-label">ยอดเข้าเล่นสะสม</span><span class="stat-icon violet"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.64-6.36M3 4v5h5M12 7v5l3 2"/></svg></span></div><div id="visits" class="stat-number" data-value="0">—</div><div class="stat-foot">ยอดเข้าชมสะสมตามข้อมูล Roblox</div><div class="stat-bottom-label"><span>TOTAL VISITS</span><span class="stat-mini-line violet-line"></span></div></article>
+            <article class="stat-card panel stat-capacity"><div class="stat-top"><span class="stat-label">การใช้ความจุเซิร์ฟเวอร์</span><span class="stat-icon amber"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16V4"/></svg></span></div><div class="capacity-readout"><div id="capacityPercent" class="stat-number" data-value="0">—</div><span>ใช้งาน</span></div><div class="capacity-track"><span id="capacityFill"></span></div><div id="capacityCaption" class="stat-foot">รอข้อมูลความจุ</div><div class="stat-bottom-label"><span>CAPACITY UTILIZATION</span><span class="stat-mini-line amber-line"></span></div></article>
           </div>
 
           <div class="analytics-grid" id="live-analytics">
-            <section class="card chart-card">
-              <div class="section-heading"><div><span class="section-overline">PLAYER TREND</span><h3>แนวโน้มผู้เล่นออนไลน์</h3></div><span class="chart-period"><i></i> ประวัติในอุปกรณ์นี้</span></div>
-              <div class="chart-summary"><div><span class="summary-label">จำนวนล่าสุด</span><strong id="chartCurrent">—</strong></div><div><span class="summary-label">จุดข้อมูล</span><strong id="chartSamples">0 <small>checks</small></strong></div><div class="chart-delta" id="chartDelta">รอข้อมูลเพิ่ม</div></div>
-              <div id="trendChart" class="trend-chart"><div class="chart-empty"><span class="chart-empty-icon">⌁</span><b>กำลังรอข้อมูลแนวโน้ม</b><span>กราฟจะเริ่มแสดงเมื่อมีการตรวจสอบอย่างน้อย 2 ครั้ง</span></div></div>
+            <section class="panel chart-panel">
+              <div class="panel-heading"><div><span class="overline">PLAYER TREND</span><h3>แนวโน้มผู้เล่นออนไลน์</h3><p class="panel-subtitle">จำนวนผู้เล่นที่บันทึกได้ในช่วงเวลาที่เลือก</p></div><div class="chart-actions"><label for="rangeSelector" class="sr-only">ช่วงเวลาของกราฟ</label><select id="rangeSelector" class="range-select"><option value="1h">1 ชั่วโมง</option><option value="6h">6 ชั่วโมง</option><option value="24h" selected>24 ชั่วโมง</option><option value="7d">7 วัน</option><option value="30d">30 วัน</option></select><button id="exportHistoryBtn" class="icon-button small-icon-button" type="button" title="ส่งออกข้อมูล CSV" aria-label="ส่งออกข้อมูล CSV"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 17v4h16v-4"/></svg></button></div></div>
+              <div class="chart-summary"><div><span class="summary-label">ล่าสุด</span><strong id="chartCurrent">—</strong></div><div><span class="summary-label">จุดข้อมูล</span><strong id="chartSamples">0 <small>จุด</small></strong></div><div class="chart-delta" id="chartDelta">รอข้อมูลเพิ่ม</div></div>
+              <div id="trendChart" class="trend-chart"><div class="chart-empty"><span class="chart-empty-icon">⌁</span><b>กำลังรอข้อมูลแนวโน้ม</b><span>กราฟจะเริ่มแสดงเมื่อมีข้อมูลอย่างน้อย 2 จุด</span></div></div>
               <div class="chart-axis"><span id="chartStart">เริ่มตรวจสอบ</span><span id="chartEnd">ล่าสุด</span></div>
-              <div class="chart-footnote"><span class="footnote-mark">i</span> ประวัตินี้เก็บในเบราว์เซอร์ปัจจุบัน ไม่ใช่ฐานข้อมูลกลาง</div>
+              <div class="chart-source"><i></i><span id="chartDataSource">แหล่งข้อมูล: รอการตรวจสอบ</span></div>
             </section>
 
-            <section class="card capacity-card">
-              <div class="section-heading"><div><span class="section-overline">SERVER CAPACITY</span><h3>สัดส่วนการใช้งาน</h3></div><span class="capacity-ring-wrap"><svg id="capacityRing" viewBox="0 0 100 100" aria-label="เปอร์เซ็นต์การใช้ความจุ"><circle class="ring-track" cx="50" cy="50" r="41"/><circle id="capacityRingFill" class="ring-fill" cx="50" cy="50" r="41"/></svg><span id="ringLabel">—</span></span></div>
-              <div class="capacity-main"><strong id="capacityRatio">— / —</strong><span>ผู้เล่นต่อความจุสูงสุด</span></div>
-              <div class="segmented-bar" id="capacitySegments" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              <div class="capacity-scale"><span>0%</span><span>ระดับการใช้ความจุ</span><span>100%</span></div>
-              <div class="capacity-note"><span class="note-dot"></span><span id="capacityNote">ความจุสูงสุดเป็นค่าต่อเซิร์ฟเวอร์ ไม่ใช่จำนวนผู้เล่นทั้งเกม</span></div>
-              <div class="capacity-legend"><span><i class="legend-dot legend-low"></i> สำรองอยู่</span><span><i class="legend-dot legend-high"></i> ใกล้เต็ม</span></div>
+            <section class="panel capacity-panel">
+              <div class="panel-heading"><div><span class="overline">SERVER CAPACITY</span><h3>สัดส่วนการใช้งาน</h3><p class="panel-subtitle">ความจุสูงสุดต่อเซิร์ฟเวอร์ ไม่ใช่ทั้งเกม</p></div><span class="capacity-ring-wrap"><svg id="capacityRing" viewBox="0 0 100 100" role="img" aria-label="เปอร์เซ็นต์การใช้ความจุ"><circle class="ring-track" cx="50" cy="50" r="41"/><circle id="capacityRingFill" class="ring-fill" cx="50" cy="50" r="41"/></svg><span id="ringLabel">—</span></span></div>
+              <div class="capacity-main"><strong id="capacityRatio">— / —</strong><span>ผู้เล่น / ความจุ</span></div><div class="segmented-bar" id="capacitySegments" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="capacity-scale"><span>0%</span><span>การใช้ความจุ</span><span>100%</span></div>
+              <div class="capacity-note"><span class="note-dot"></span><span id="capacityNote">ข้อมูลนี้เป็นค่าความจุต่อเซิร์ฟเวอร์</span></div>
+              <div class="insight-grid"><div class="insight-item"><span>จุดสูงสุดในกราฟ</span><strong id="insightPeak">—</strong></div><div class="insight-item"><span>ค่าเฉลี่ย</span><strong id="insightAverage">—</strong></div><div class="insight-item"><span>เปลี่ยนแปลง</span><strong id="insightChange">—</strong></div></div>
             </section>
           </div>
 
           <div class="lower-grid">
-            <section class="card info-card" id="game-metadata"><div class="section-heading"><div><span class="section-overline">GAME METADATA</span><h3>รายละเอียดเกม</h3></div><span class="tiny-tag">PUBLIC API</span></div>
-              <dl class="detail-list">
-                <div><dt>Place ID</dt><dd id="detailPlaceId">—</dd></div>
-                <div><dt>Universe ID</dt><dd id="universeId">—</dd></div>
-                <div><dt>ผู้สร้าง</dt><dd id="creatorId">—</dd></div>
-                <div><dt>สถานะเกม</dt><dd id="gameStatus">—</dd></div>
-                <div><dt>อัปเดตข้อมูลล่าสุด</dt><dd id="updatedAt">—</dd></div>
-              </dl>
-              <div class="metadata-foot"><span class="metadata-foot-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span><span><strong>Read-only connection</strong><small>แสดงเฉพาะฟิลด์ที่เปิดเผยผ่านข้อมูลสาธารณะ</small></span></div>
-            </section>
-
-            <section class="card activity-card" id="recent-activity"><div class="section-heading"><div><span class="section-overline">RECENT CHECKS</span><h3>ประวัติการตรวจสอบ</h3></div><span class="activity-live"><i class="pulse-dot"></i> LOCAL LOG</span></div>
-              <div id="recentChecks" class="recent-checks"><div class="activity-empty"><span class="activity-empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><strong>ยังไม่มีประวัติ</strong><p>รายการตรวจสอบจะปรากฏที่นี่หลังจากดึงข้อมูลเกมสำเร็จ</p></div></div>
-              <div class="local-note"><span class="local-note-dot"></span> บันทึกเฉพาะในเบราว์เซอร์นี้ ยังไม่ซิงก์ข้ามอุปกรณ์</div>
-            </section>
+            <section class="panel info-panel" id="game-metadata"><div class="panel-heading"><div><span class="overline">GAME METADATA</span><h3>รายละเอียดเกม</h3></div><span class="tiny-tag">PUBLIC API</span></div><dl class="detail-list"><div><dt>Place ID</dt><dd id="detailPlaceId">—</dd></div><div><dt>Universe ID</dt><dd id="universeId">—</dd></div><div><dt>Creator ID</dt><dd id="creatorId">—</dd></div><div><dt>สถานะการเข้าถึง</dt><dd id="gameStatus">—</dd></div><div><dt>อัปเดตข้อมูลสำเร็จ</dt><dd id="updatedAt">—</dd></div></dl><div class="metadata-foot"><span class="metadata-lock">i</span><span>ระบบนี้ไม่เข้าถึงรายชื่อผู้เล่นหรือข้อมูลส่วนตัวในเซิร์ฟเวอร์</span></div></section>
+            <section class="panel activity-panel" id="recent-activity"><div class="panel-heading"><div><span class="overline">RECENT ACTIVITY</span><h3>ประวัติการตรวจสอบ</h3></div><span class="activity-tag"><i class="pulse-dot"></i> LOCAL / D1</span></div><div id="recentChecks" class="recent-checks"><div class="activity-empty"><span class="activity-empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><strong>ยังไม่มีประวัติ</strong><p>รายการตรวจสอบจะแสดงหลังจากดึงข้อมูลสำเร็จ</p></div></div><div class="local-note" id="historyRetentionNote">ประวัติในเบราว์เซอร์เป็นข้อมูลเฉพาะอุปกรณ์นี้</div></section>
           </div>
         </section>
 
-        <section class="notice" aria-label="ข้อจำกัดของข้อมูล"><span class="notice-icon">i</span><p><b>ขอบเขตการมอนิเตอร์</b><br>แดชบอร์ดนี้ใช้ข้อมูลที่ Roblox เปิดเผยต่อสาธารณะ จำนวนผู้เล่นเป็นภาพรวม ณ เวลาที่ API ตอบกลับ และความจุสูงสุดเป็นค่าต่อเซิร์ฟเวอร์ ไม่สามารถแสดงชื่อผู้เล่นหรือประวัติเข้า–ออกของแต่ละคนได้ หากต้องการข้อมูลเชิงลึกภายในเกม จำเป็นต้องเพิ่มระบบบันทึกข้อมูลในประสบการณ์ Roblox ของคุณเอง</p></section>
+        <section class="panel alert-panel" aria-label="เหตุการณ์ล่าสุด"><div class="panel-heading"><div><span class="overline">EVENTS & ALERTS</span><h3>เหตุการณ์ล่าสุด</h3><p class="panel-subtitle">แจ้งเตือนเมื่อข้อมูลข้ามเกณฑ์หรือมีปัญหาการตรวจสอบ</p></div><button id="clearEvents" class="text-button" type="button">ล้างเหตุการณ์</button></div><div id="alertLog" class="alert-log"><div class="alert-empty">ยังไม่มีเหตุการณ์ใหม่</div></div></section>
 
-        <footer class="page-footer"><span class="footer-brand"><span class="footer-mark">R</span> ROBLOX GAME MONITOR</span><span class="footer-right"><i class="footer-dot"></i> PUBLIC DATA MONITOR <b>·</b> SESSION-BASED HISTORY</span></footer>
+        <section class="notice" id="system-notes"><span class="notice-icon">i</span><p><b>ขอบเขตและข้อจำกัด</b><br>จำนวนผู้เล่นและยอดเข้าชมเป็นข้อมูลที่ Roblox เปิดเผยต่อสาธารณะและเป็นภาพ ณ เวลาที่ดึงข้อมูล ความจุสูงสุดเป็นค่าต่อเซิร์ฟเวอร์ ไม่ใช่จำนวนผู้เล่นทั้งหมด ข้อมูลสาธารณะอาจล่าช้า ถูกจำกัดอัตราการเรียก หรือเปลี่ยนรูปแบบได้ ระบบนี้ไม่สามารถแสดงชื่อผู้เล่นหรือเวลาเข้า–ออกของแต่ละคนได้ หากต้องการ telemetry ภายในเกม ต้องเพิ่มระบบบันทึกใน Roblox Experience ของตนเอง</p></section>
+        <footer class="page-footer"><span class="footer-brand"><span class="footer-mark">R</span> ROBLOX GAME MONITOR</span><span class="footer-right"><i class="footer-dot"></i> PUBLIC DATA MONITOR <b>·</b> <span id="footerStorageMode">SESSION INITIALIZING</span></span></footer>
       </main>
     </div>
   </div>
-  <script src="./app.js" defer></script>
 </body>
 </html>
