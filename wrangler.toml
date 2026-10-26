@@ -1,4 +1,4 @@
-name = "roblox-live-console"
+name = "roblox-game-monitor"
 main = "worker/index.js"
 compatibility_date = "2026-10-26"
 workers_dev = true

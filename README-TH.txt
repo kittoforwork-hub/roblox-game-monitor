@@ -1,7 +1,9 @@
-ROBLOX MONITOR — LIVE OPERATIONS CONSOLE 2.0
+ROBLOX MONITOR — LIVE OPERATIONS CONSOLE 2.0 (HOTFIX 404)
 ============================================
 
 ชุดนี้เป็นโปรเจกต์ Cloudflare Workers + Static Assets + D1 ออกแบบให้ไฟล์ HTML, CSS, JavaScript และ API ทำงานร่วมกันได้ โดยคงฟังก์ชันหลักจากหน้าเดิมไว้ และเพิ่ม Multi-Game Workspace, การเก็บประวัติถาวร, กราฟหลายช่วงเวลา, CSV export, สถานะข้อมูลเก่า, Browser Notifications และ rate limiting ฝั่ง API
+
+สำคัญสำหรับแก้ 404: wrangler.toml ตั้งชื่อ Worker เป็น roblox-game-monitor ให้ตรงกับ URL roblox-game-monitor.kitto-for-work.workers.dev ที่หน้าเว็บใช้งานอยู่ หากต้องการ deploy ไปยัง Worker คนละชื่อ ต้องตั้งค่าหน้าเว็บให้เรียก API ของ Worker ตัวนั้นอย่างชัดเจนด้วย
 
 ไฟล์ในชุด
 ----------
@@ -21,15 +23,17 @@ wrangler.toml           การตั้งค่า Worker, Static Assets, D1
      npx wrangler login
 3. สร้าง D1 database:
      npx wrangler d1 create roblox-monitor-db
-4. คัดลอก database_id ที่คำสั่งแสดง แล้วแทนที่ REPLACE_AFTER_CREATING_D1 ใน wrangler.toml
-5. สร้างตารางใน D1 บน Cloudflare:
+4. คัดลอก database_id ที่คำสั่งแสดง แล้วแทนที่ REPLACE_AFTER_CREATING_D1 ใน wrangler.toml (ห้าม deploy โดยปล่อย placeholder ไว้)
+5. ตรวจว่าบรรทัดแรกใน wrangler.toml เป็น name = "roblox-game-monitor" เพื่ออัปเดต Worker เดียวกับ URL ที่หน้าเว็บเรียก
+6. หากใช้ D1 database ที่สร้างไว้แล้ว ให้นำ database_id จริงของฐานข้อมูลนั้นมาใส่ ไม่ต้องสร้าง database ใหม่ซ้ำ
+7. สร้างตารางใน D1 บน Cloudflare:
      npx wrangler d1 migrations apply roblox-monitor-db --remote
-6. ตั้ง secret สำหรับสร้าง hash ของ IP ใน rate limiter (ใช้ข้อความสุ่มยาว ๆ ไม่ใช่รหัสผ่าน Roblox):
+8. ตั้ง secret สำหรับสร้าง hash ของ IP ใน rate limiter (ใช้ข้อความสุ่มยาว ๆ ไม่ใช่รหัสผ่าน Roblox):
      npx wrangler secret put RATE_LIMIT_SALT
-7. Deploy:
+9. Deploy:
      npx wrangler deploy
 
-เปิด URL ของ Worker ที่ Wrangler แจ้ง แล้วทดสอบ /api/health ต้องแสดง ok:true และ storage.d1:true
+เมื่อ deploy ให้ตรวจว่า Wrangler อัปเดต Worker ชื่อ roblox-game-monitor (ไม่ใช่สร้าง roblox-live-console ตัวใหม่) จากนั้นเปิด https://roblox-game-monitor.kitto-for-work.workers.dev/api/health ต้องได้ JSON ที่มี ok:true และ version:"2.0.0" หากยังได้ 404 ให้ตรวจชื่อ Worker/Account และดู Deployments/Logs ใน Cloudflare Dashboard
 หากต้องการทดสอบก่อน deploy ใช้ npx wrangler dev และปรับ migrations ให้กับ local D1:
      npx wrangler d1 migrations apply roblox-monitor-db --local
 
@@ -76,4 +80,4 @@ GET /api/history?placeId=123&range=1h|6h|24h|7d|30d
 - PARTIAL DATA / STALE DATA: มีบางเกมดึงข้อมูลไม่สำเร็จหรือกำลังแสดงค่าล่าสุดที่เคยสำเร็จ
 - API UNAVAILABLE: หน้าเว็บติดต่อ /api/health ไม่สำเร็จ ตรวจสอบการ deploy และ route /api/*
 
-เวอร์ชัน: 2.0.0
+เวอร์ชัน: 2.0.0 · 404 hotfix config
