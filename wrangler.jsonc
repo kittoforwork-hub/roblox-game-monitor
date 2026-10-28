@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "roblox-monitor-db",
-      "database_id": "REPLACE_AFTER_CREATING_D1",
+      "database_id": "d42a05e5-060c-4c6c-91fe-8c10375cb247",
       "migrations_dir": "migrations"
     }
   ],
