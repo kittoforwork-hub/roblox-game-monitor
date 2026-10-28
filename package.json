@@ -1,0 +1,15 @@
+{
+  "name": "roblox-live-console",
+  "version": "2.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node tests/worker-smoke.mjs",
+    "check": "node --check worker/index.js && node --check public/app.js && node tests/worker-smoke.mjs"
+  },
+  "dependencies": {
+    "wrangler": "^4.45.0"
+  }
+}
