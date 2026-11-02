@@ -1,7 +1,12 @@
 -- Place this Script in ServerScriptService (server-side only).
 -- Create a Roblox Secret named "RobloxMonitorToken" with the same value as
 -- the Cloudflare Worker secret ROBLOX_INGEST_TOKEN. Never put the token in a LocalScript.
--- Enable: Game Settings > Security > Allow HTTP Requests.
+-- Secret domain: set the Secret's domain to your Worker host only (for example
+-- roblox-game-monitor.<account>.workers.dev), not "*". Secrets go in headers, never in the body.
+-- Enable: Experience Settings > Security > Allow HTTP Requests.
+-- Privacy: this sends Roblox user IDs to an external server. Tell players in your experience's
+-- privacy disclosure, keep SEND_USERNAME off unless you need it, and never send data about
+-- players you are not permitted to track under Roblox policies or local privacy law.
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -11,6 +16,8 @@ local AUTHORIZATION = HttpService:GetSecret("RobloxMonitorToken"):AddPrefix("Bea
 local SERVER_JOB_ID = game.JobId ~= "" and game.JobId or ("studio-" .. HttpService:GenerateGUID(false))
 local FLUSH_INTERVAL_SECONDS = 5
 local MAX_BATCH_SIZE = 25
+local MAX_QUEUE_SIZE = 2000 -- drop the oldest events if the endpoint stays down
+local SEND_USERNAME = false -- data minimisation: user IDs are enough for session counts
 local MAX_RETRIES = 5
 local RETRY_BASE_SECONDS = 2
 
@@ -28,9 +35,12 @@ local function queuePlayerEvent(eventType, player)
         universeId = tostring(game.GameId),
         jobId = SERVER_JOB_ID,
         userId = userId,
-        username = player.Name,
+        username = SEND_USERNAME and player.Name or nil,
         occurredAt = DateTime.now().UnixTimestampMillis,
     })
+    while #queue > MAX_QUEUE_SIZE do
+        table.remove(queue, 1)
+    end
 end
 
 local function sendBatch(batch, retryLimit)
@@ -54,6 +64,12 @@ local function sendBatch(batch, retryLimit)
         end
 
         local statusCode = ok and response and response.StatusCode or 0
+        -- A 4xx (other than 408/429) means the batch itself is rejected; retrying would block
+        -- every later event, so drop it and keep the queue moving.
+        if statusCode >= 400 and statusCode < 500 and statusCode ~= 408 and statusCode ~= 429 then
+            warn(string.format("[PlayerTelemetry] Batch rejected with status %d; dropping %d events", statusCode, #batch))
+            return true
+        end
         warn(string.format("[PlayerTelemetry] Send failed (attempt %d/%d, status %s)", attempt, retryLimit, tostring(statusCode)))
         if attempt < retryLimit then
             task.wait(math.min(RETRY_BASE_SECONDS * (2 ^ (attempt - 1)), 30))
