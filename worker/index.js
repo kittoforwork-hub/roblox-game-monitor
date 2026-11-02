@@ -1,7 +1,11 @@
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 const MAX_TRACKED = 10;
 const MAX_HISTORY_DAYS = 30;
-const DEFAULT_RATE_LIMIT = 50;
+const DEFAULT_RATE_LIMIT = 120;
+const SAMPLE_MAX_GAMES = 60;
+const SAMPLE_ACTIVE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+// A server crash can skip the leave event, so a session with no event for this long is treated as ended.
+const STALE_SESSION_MS = 12 * 60 * 60 * 1000;
 const WINDOW_MS = 60_000;
 
 class UpstreamError extends Error {
@@ -51,9 +55,9 @@ async function fetchPublicJson(url) {
     try {
       response = await fetch(url, {
         method: 'GET',
-        headers: { Accept: 'application/json', 'User-Agent': 'Roblox-Live-Operations-Monitor/2.0' },
+        headers: { Accept: 'application/json', 'User-Agent': 'Roblox-Live-Operations-Monitor/2.2 (public read-only)' },
         signal: AbortSignal.timeout(10_000),
-        cf: { cacheTtl: 20, cacheEverything: true }
+        cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 20, '300-599': 0 } }
       });
     } catch (error) {
       lastError = new UpstreamError('เชื่อมต่อ Roblox API ไม่สำเร็จหรือหมดเวลา', 502, 'UPSTREAM_NETWORK_ERROR');
@@ -167,14 +171,17 @@ async function getGames(placeIds, env) {
   const storage = await persistSnapshots(env, successful);
   return result.map((item) => item.ok ? { ...item, storage } : item);
 }
-async function persistSnapshots(env, games) {
+async function persistSnapshots(env, games, { touch = true } = {}) {
   if (!env.DB || !games.length) return 'local';
   try {
     const now = Date.now();
     const statements = [];
     for (const game of games) {
       const playable = typeof game.isPlayable === 'boolean' ? (game.isPlayable ? 1 : 0) : null;
-      statements.push(env.DB.prepare(`INSERT INTO monitored_games (place_id, universe_id, name, creator_name, creator_id, is_playable, last_seen, last_playing, max_players, visits)
+      if (!touch) {
+        statements.push(env.DB.prepare('UPDATE monitored_games SET name=?, is_playable=?, last_playing=?, max_players=?, visits=? WHERE place_id=?')
+          .bind(game.name, playable, game.playing, game.maxPlayers, game.visits, game.placeId));
+      } else statements.push(env.DB.prepare(`INSERT INTO monitored_games (place_id, universe_id, name, creator_name, creator_id, is_playable, last_seen, last_playing, max_players, visits)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(place_id) DO UPDATE SET universe_id=excluded.universe_id, name=excluded.name, creator_name=excluded.creator_name,
         creator_id=excluded.creator_id, is_playable=excluded.is_playable, last_seen=excluded.last_seen, last_playing=excluded.last_playing,
@@ -394,11 +401,11 @@ async function handlePlayerTelemetryRead(request, env, url) {
   try {
     if (url.pathname === '/api/roblox/players') {
       const [countRow, rows] = await Promise.all([
-        env.DB.prepare('SELECT COUNT(*) AS activeCount FROM player_sessions WHERE place_id = ? AND is_active = 1').bind(placeId).first(),
+        env.DB.prepare('SELECT COUNT(*) AS activeCount FROM player_sessions WHERE place_id = ? AND is_active = 1 AND last_event_at >= ?').bind(placeId, Date.now() - STALE_SESSION_MS).first(),
         env.DB.prepare(`SELECT place_id AS placeId, job_id AS jobId, user_id AS userId, username,
           joined_at AS joinedAt, last_event_at AS lastEventAt
-          FROM player_sessions WHERE place_id = ? AND is_active = 1
-          ORDER BY joined_at DESC LIMIT ?`).bind(placeId, limit).all()
+          FROM player_sessions WHERE place_id = ? AND is_active = 1 AND last_event_at >= ?
+          ORDER BY joined_at DESC LIMIT ?`).bind(placeId, Date.now() - STALE_SESSION_MS, limit).all()
       ]);
       return json({ ok: true, placeId, source: 'd1', activeCount: Number(countRow?.activeCount) || 0, returnedCount: (rows.results || []).length, players: rows.results || [], checkedAt: Date.now() });
     }
@@ -439,6 +446,38 @@ async function handleApi(request, env, ctx) {
 
   const rate = await enforceRateLimit(request, env);
   if (!rate.allowed) return withCors(request, json({ error: 'เรียก API ถี่เกินไป กรุณารอก่อนลองใหม่', code: 'RATE_LIMITED', retryAfter: rate.retryAfter }, 429, { 'Retry-After': String(rate.retryAfter || 60) }), env);
+
+  if (url.pathname === '/api/histories') {
+    const raw = url.searchParams.get('placeIds') || '';
+    const rawIds = raw.split(',').map((item) => item.trim()).filter(Boolean);
+    if (!rawIds.length || rawIds.some((item) => !positivePlaceId(item))) return withCors(request, json({ error: 'กรุณาระบุ placeIds เป็นตัวเลขคั่นด้วย comma เท่านั้น', code: 'INVALID_PLACE_IDS' }, 400), env);
+    const ids = [...new Set(rawIds.map(positivePlaceId))];
+    const maxTracked = Number(env.MAX_TRACKED_GAMES) > 0 ? Math.min(Number(env.MAX_TRACKED_GAMES), MAX_TRACKED) : MAX_TRACKED;
+    if (ids.length > maxTracked) return withCors(request, json({ error: `ติดตามได้สูงสุด ${maxTracked} เกมต่อคำขอ`, code: 'TOO_MANY_PLACE_IDS' }, 400), env);
+    const range = ['1h', '6h', '24h', '7d', '30d'].includes(url.searchParams.get('range')) ? url.searchParams.get('range') : '24h';
+    if (!env.DB) return withCors(request, json({ range, source: 'local', series: {}, retentionDays: 0 }), env);
+    const now = Date.now();
+    const rangeMs = { '1h': 3600000, '6h': 21600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 }[range];
+    // Coarser buckets than the single-game endpoint keep ~300 points per game, so 10 games stay light.
+    const bucketMs = { '1h': 60_000, '6h': 120_000, '24h': 300_000, '7d': 1_800_000, '30d': 7_200_000 }[range];
+    try {
+      const marks = ids.map(() => '?').join(',');
+      const rows = await env.DB.prepare(`SELECT place_id AS placeId, CAST(sampled_at / ? AS INTEGER) * ? AS ts, CAST(AVG(playing) AS INTEGER) AS playing,
+        MAX(max_players) AS maxPlayers, MAX(visits) AS visits, COUNT(*) AS sampleCount
+        FROM game_snapshots WHERE place_id IN (${marks}) AND sampled_at >= ?
+        GROUP BY place_id, CAST(sampled_at / ? AS INTEGER) ORDER BY place_id, ts ASC LIMIT 20000`)
+        .bind(bucketMs, bucketMs, ...ids, now - rangeMs, bucketMs).all();
+      const series = Object.fromEntries(ids.map((id) => [id, []]));
+      for (const row of rows.results || []) {
+        if (!series[row.placeId]) continue;
+        series[row.placeId].push({ ts: Number(row.ts), playing: safeNumber(row.playing), maxPlayers: safeNumber(row.maxPlayers), visits: safeNumber(row.visits), sampleCount: Number(row.sampleCount) || 1 });
+      }
+      return withCors(request, json({ range, bucketMs, source: 'd1', series, retentionDays: MAX_HISTORY_DAYS, checkedAt: now }), env);
+    } catch (error) {
+      console.error('Batch history query failed:', error && error.message);
+      return withCors(request, json({ range, source: 'local', series: {}, warning: 'D1 history unavailable', retentionDays: 0 }), env);
+    }
+  }
 
   if (url.pathname === '/api/history') {
     const placeId = positivePlaceId(url.searchParams.get('placeId'));
@@ -501,6 +540,45 @@ function addSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+async function sampleMonitoredGames(env) {
+  if (!env.DB) return;
+  const since = Date.now() - SAMPLE_ACTIVE_WINDOW_MS;
+  const rows = await env.DB.prepare('SELECT place_id AS placeId, universe_id AS universeId FROM monitored_games WHERE last_seen >= ? AND universe_id IS NOT NULL ORDER BY last_seen DESC LIMIT ?')
+    .bind(since, SAMPLE_MAX_GAMES).all();
+  const targets = (rows.results || []).filter((row) => positivePlaceId(row.placeId) && positivePlaceId(row.universeId));
+  for (let i = 0; i < targets.length; i += 25) {
+    const chunk = targets.slice(i, i + 25);
+    const universeIds = [...new Set(chunk.map((row) => row.universeId))];
+    try {
+      const data = await fetchPublicJson(`https://games.roblox.com/v1/games?universeIds=${universeIds.join(',')}`);
+      const byUniverse = new Map((Array.isArray(data && data.data) ? data.data : []).map((item) => [String(item.id), item]));
+      const games = chunk.map((row) => byUniverse.get(String(row.universeId)) && normalizeGame(row.placeId, row.universeId, byUniverse.get(String(row.universeId)), '')).filter(Boolean);
+      await persistSnapshots(env, games, { touch: false });
+    } catch (error) {
+      console.warn('Scheduled sampling failed:', error && error.message);
+      if (error && error.code === 'ROBLOX_RATE_LIMITED') break;
+    }
+  }
+}
+
+async function runCleanup(env) {
+  const now = Date.now();
+  const cutoff = now - MAX_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+  const rateCutoff = now - 60 * 60 * 1000;
+  const base = env.DB.batch([
+    env.DB.prepare('DELETE FROM game_snapshots WHERE sampled_at < ?').bind(cutoff),
+    env.DB.prepare('DELETE FROM monitored_games WHERE last_seen < ?').bind(cutoff),
+    env.DB.prepare('DELETE FROM request_limits WHERE window_start < ?').bind(rateCutoff)
+  ]).catch((error) => console.error('Scheduled game/rate-limit cleanup failed:', error && error.message));
+  // Close sessions whose leave event never arrived; drop old events/sessions after retention.
+  const telemetry = env.DB.batch([
+    env.DB.prepare('DELETE FROM player_events WHERE occurred_at < ?').bind(cutoff),
+    env.DB.prepare('UPDATE player_sessions SET is_active = 0, left_at = last_event_at WHERE is_active = 1 AND last_event_at < ?').bind(now - STALE_SESSION_MS),
+    env.DB.prepare('DELETE FROM player_sessions WHERE is_active = 0 AND last_event_at < ?').bind(cutoff)
+  ]).catch((error) => console.warn('Scheduled telemetry cleanup skipped (apply migration 0002):', error && error.message));
+  await Promise.all([base, telemetry]);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -510,20 +588,10 @@ export default {
   },
   async scheduled(controller, env, ctx) {
     if (!env.DB) return;
-    const cutoff = Date.now() - MAX_HISTORY_DAYS * 24 * 60 * 60 * 1000;
-    const rateCutoff = Date.now() - 60 * 60 * 1000;
-    // Keep the original game-history cleanup independent from telemetry migrations.
-    const baseCleanup = env.DB.batch([
-      env.DB.prepare('DELETE FROM game_snapshots WHERE sampled_at < ?').bind(cutoff),
-      env.DB.prepare('DELETE FROM request_limits WHERE window_start < ?').bind(rateCutoff)
-    ]).catch((error) => console.error('Scheduled game/rate-limit cleanup failed:', error && error.message));
-    // A missing leave event must not leave a player marked active forever.
-    // Event history and inactive projections follow the same 30-day retention window.
-    const telemetryCleanup = env.DB.batch([
-      env.DB.prepare('DELETE FROM player_events WHERE occurred_at < ?').bind(cutoff),
-      env.DB.prepare('UPDATE player_sessions SET is_active = 0, left_at = last_event_at WHERE is_active = 1 AND last_event_at < ?').bind(cutoff),
-      env.DB.prepare('DELETE FROM player_sessions WHERE is_active = 0 AND last_event_at < ?').bind(cutoff)
-    ]).catch((error) => console.warn('Scheduled telemetry cleanup skipped (apply migration 0002):', error && error.message));
-    ctx.waitUntil(Promise.all([baseCleanup, telemetryCleanup]));
+    // Cron runs every 5 minutes: always sample, and run retention cleanup once per hour.
+    const minute = new Date(controller.scheduledTime || Date.now()).getUTCMinutes();
+    const tasks = [sampleMonitoredGames(env).catch((error) => console.error('Sampling error:', error && error.message))];
+    if (minute < 5) tasks.push(runCleanup(env));
+    ctx.waitUntil(Promise.all(tasks));
   }
 };
