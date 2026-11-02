@@ -1,4 +1,4 @@
-# Roblox Game Monitor — Live Operations Console 2.1.0
+# Roblox Game Monitor 2.2.0
 
 ชุดนี้แก้ปัญหา Worker API 404 โดยให้ `wrangler.jsonc` เป็น Wrangler config หลักเพียงไฟล์เดียวและชี้ไป `worker/index.js` ซึ่งมี API routes ครบ รวมถึงเตรียม API สำหรับรับ event ผู้เล่น Roblox join/leave ผ่าน server-to-server token authentication
 
@@ -56,3 +56,14 @@ npm run check
 หลัง deploy ให้เปิด `https://ชื่อ-worker.workers.dev/api/health` ต้องได้ `ok: true`, และหลัง apply migration 0002 กับตั้ง secret แล้ว `telemetry.schemaReady: true`, `telemetry.configured: true`
 
 เอกสารทางการ: [Cloudflare Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/), [Cloudflare D1](https://developers.cloudflare.com/d1/worker-api/d1-database/), [Roblox HttpService](https://create.roblox.com/docs/reference/engine/classes/HttpService).
+
+## มีอะไรใหม่ใน 2.2.0
+
+- UI ใหม่แนวองค์กร: ภาพรวมทุกเกม (ตาราง/การ์ด), หน้าเปรียบเทียบหลายเกมบนกราฟเดียว, หน้ารายละเอียดเกม, การแจ้งเตือน, ขอบเขตและนโยบายข้อมูล
+- `GET /api/histories?placeIds=1,2,3&range=24h` ดึงประวัติหลายเกมในคำขอเดียว
+- Cron ทุก 5 นาที เก็บ snapshot ของเกมที่มีคนเปิดดูใน 3 วันล่าสุด (ไม่ต้องเปิดเว็บค้าง) และล้างข้อมูลเก่าวันละชั่วโมงละครั้ง
+- แก้บัค: ผู้เล่นที่ไม่มี event ออกจากเซิร์ฟเวอร์ที่ crash จะไม่ค้างเป็น active (หมดอายุใน 12 ชม.), แคชไม่เก็บ response ที่ error, แจ้งเตือนซ้ำทุกครั้งที่รีโหลด, ข้อความ error ของ Place ID ที่ไม่มีจริงถูกทับ, ตัวเลข "ความจุ %" ที่เอาผู้เล่นทั้งเกมไปหารขนาดเซิร์ฟเวอร์ (ผิดความหมาย) ถูกเอาออก
+- สคริปต์ Roblox: ไม่ retry batch ที่ถูกปฏิเสธ (4xx) จนคิวค้าง, จำกัดขนาดคิว, ส่งเฉพาะ User ID เป็นค่าเริ่มต้น (`SEND_USERNAME = false`)
+- เพิ่ม Content-Security-Policy ใน `public/_headers`
+
+> ตั้ง Domain ของ Roblox Secret เป็นโฮสต์ Worker ของคุณโดยเฉพาะ ไม่ใช้ `*` และแจ้งผู้เล่นในนโยบายความเป็นส่วนตัวของเกมหากเปิดใช้ telemetry
