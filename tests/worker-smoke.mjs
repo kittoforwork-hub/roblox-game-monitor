@@ -29,7 +29,7 @@ globalThis.fetch = async (input) => {
 };
 
 const ctx = { waitUntil() {} };
-const env = { APP_VERSION: '2.1.0', MAX_TRACKED_GAMES: '10' };
+const env = { APP_VERSION: '2.2.0', MAX_TRACKED_GAMES: '10' };
 
 function makeMockD1({ eventRows = [], playerRows = [] } = {}) {
   const eventIds = new Set();
@@ -93,7 +93,7 @@ try {
   assert.equal(healthRes.status, 200);
   const health = await healthRes.json();
   assert.equal(health.ok, true);
-  assert.equal(health.version, '2.1.0');
+  assert.equal(health.version, '2.2.0');
   assert.equal(health.storage.d1, false);
   assert.equal(health.telemetry.configured, false);
 
@@ -133,6 +133,26 @@ try {
   const d1History = await (await worker.fetch(new Request('https://monitor.example/api/history?placeId=123&range=24h'), d1Env, ctx)).json();
   assert.equal(d1History.source, 'd1');
   assert.equal(d1History.samples[0].playing, 31);
+
+  // Multi-game history: one query returns a series per requested place.
+  const histMock = { ...mockD1, prepare(sql) { const st = mockD1.prepare(sql); st.all = async () => ({ results: [{ placeId: '123', ts: Date.now() - 60_000, playing: 31, maxPlayers: 50, visits: 1, sampleCount: 2 }, { placeId: '456', ts: Date.now() - 60_000, playing: 5, maxPlayers: 20, visits: 1, sampleCount: 1 }] }); return st; } };
+  const multi = await (await worker.fetch(new Request('https://monitor.example/api/histories?placeIds=123,456&range=24h'), { ...env, DB: histMock }, ctx)).json();
+  assert.equal(multi.source, 'd1');
+  assert.equal(multi.series['123'][0].playing, 31);
+  assert.equal(multi.series['456'][0].playing, 5);
+  const multiLocal = await (await worker.fetch(new Request('https://monitor.example/api/histories?placeIds=123&range=24h'), env, ctx)).json();
+  assert.equal(multiLocal.source, 'local');
+  assert.equal((await worker.fetch(new Request('https://monitor.example/api/histories?placeIds=x'), env, ctx)).status, 400);
+
+  // Cron sampling stores snapshots for recently viewed games without refreshing last_seen.
+  const cronSql = [];
+  const cronDb = { prepare(sql) { return { sql, bind(...v) { this.v = v; return this; }, async all() { return { results: [{ placeId: '123', universeId: '9001' }] }; }, async first() { return { healthy: 1 }; } }; }, async batch(st) { cronSql.push(...st.map((x) => x.sql)); return []; } };
+  const pending = [];
+  await worker.scheduled({ scheduledTime: Date.UTC(2026, 10, 2, 10, 30) }, { ...env, DB: cronDb }, { waitUntil: (p) => pending.push(p) });
+  await Promise.all(pending);
+  assert.ok(cronSql.some((sql) => sql.includes('INSERT INTO game_snapshots')));
+  assert.ok(!cronSql.some((sql) => sql.includes('INSERT INTO monitored_games')));
+  assert.ok(!cronSql.some((sql) => sql.includes('DELETE FROM game_snapshots')), 'cleanup runs only in the first 5 minutes of each hour');
 
   const partialRes = await worker.fetch(new Request('https://monitor.example/api/games?placeIds=123,777'), d1Env, ctx);
   const partial = await partialRes.json();
