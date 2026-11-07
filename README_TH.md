@@ -1,6 +1,8 @@
-# Roblox Game Monitor 2.2.0
+# Roblox Game Monitor 2.3.0
 
 ชุดนี้แก้ปัญหา Worker API 404 โดยให้ `wrangler.jsonc` เป็น Wrangler config หลักเพียงไฟล์เดียวและชี้ไป `worker/index.js` ซึ่งมี API routes ครบ รวมถึงเตรียม API สำหรับรับ event ผู้เล่น Roblox join/leave ผ่าน server-to-server token authentication
+
+รุ่น 2.3.0 ปรับหน้าภาพรวมและเมนูมือถือ แยกยอดผู้เล่นล่าสุดจากข้อมูลเก่า และแก้กราฟแสดงผิดช่วงเมื่อสลับช่วงเวลาต่อเนื่อง หากใช้ D1 เดิมที่มี migrations 0001 และ 0002 อยู่แล้ว สามารถ deploy ทับได้เลย
 
 ## โครงสร้าง
 
@@ -9,7 +11,7 @@
 - `migrations/0001_init.sql` — ตารางเดิมสำหรับ game snapshots และ rate limit
 - `migrations/0002_player_telemetry.sql` — ตาราง player event log และ active session projection
 - `roblox/PlayerTelemetry.server.lua` — ตัวอย่าง Script สำหรับวางใน `ServerScriptService`
-- `wrangler.jsonc` — configuration หลัก (แทนที่ `database_id` placeholder ด้วย D1 ID จริง)
+- `wrangler.jsonc` — configuration หลักพร้อม D1 binding จากโปรเจกต์เดิม
 
 ## ติดตั้ง/Deploy
 

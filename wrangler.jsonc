@@ -18,7 +18,7 @@
     }
   ],
   "vars": {
-    "APP_VERSION": "2.2.0",
+    "APP_VERSION": "2.3.0",
     "MAX_TRACKED_GAMES": "10",
     "API_REQUEST_LIMIT": "120",
     "TELEMETRY_REQUEST_LIMIT": "300"

@@ -1,4 +1,4 @@
-ROBLOX MONITOR — LIVE OPERATIONS CONSOLE 2.2.0
+ROBLOX MONITOR — LIVE OPERATIONS CONSOLE 2.3.0
 ==============================================
 
 เป้าหมายของชุดแก้ไขนี้
@@ -69,7 +69,7 @@ git/config ที่เปลี่ยนจากชุดเดิม
 เปิด URL ต่อไปนี้โดยใช้ hostname จริงของ Worker:
 
 GET https://roblox-game-monitor.kitto-for-work.workers.dev/api/health
-ควรตอบ JSON มี ok:true, version:"2.2.0" และ telemetry.endpoint
+ควรตอบ JSON มี ok:true, version:"2.3.0" และ telemetry.endpoint
 
 GET https://roblox-game-monitor.kitto-for-work.workers.dev/api/game?placeId=117871374541549
 ควรตอบข้อมูลเกม หรือ error JSON ที่มี code อธิบายเหตุผล ไม่ควรเป็น HTML 404
@@ -168,4 +168,4 @@ Cloudflare D1: https://developers.cloudflare.com/d1/worker-api/d1-database/
 Roblox HttpService: https://create.roblox.com/docs/reference/engine/classes/HttpService
 Roblox in-game HTTP requests: https://create.roblox.com/docs/cloud-services/http-service
 
-เวอร์ชัน: 2.2.0
+เวอร์ชัน: 2.3.0
