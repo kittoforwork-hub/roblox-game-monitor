@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 const MAX_TRACKED = 10;
 const MAX_HISTORY_DAYS = 30;
 const DEFAULT_RATE_LIMIT = 120;
@@ -45,28 +45,30 @@ function safeNumber(value) {
 }
 function retryDelay(response, attempt) {
   const header = Number(response.headers.get('Retry-After'));
-  if (Number.isFinite(header) && header > 0) return Math.min(header * 1000, 2500);
+  if (Number.isFinite(header) && header > 0) return header * 1000;
   return attempt === 0 ? 450 : 1000;
 }
-async function fetchPublicJson(url) {
+async function fetchPublicJson(url, { timeout = 10000, attempts = 2 } = {}) {
   let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     let response;
     try {
       response = await fetch(url, {
         method: 'GET',
-        headers: { Accept: 'application/json', 'User-Agent': 'Roblox-Live-Operations-Monitor/2.2 (public read-only)' },
-        signal: AbortSignal.timeout(10_000),
+        headers: { Accept: 'application/json', 'User-Agent': 'Roblox-Live-Operations-Monitor/2.3 (public read-only)' },
+        signal: AbortSignal.timeout(timeout),
         cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 20, '300-599': 0 } }
       });
     } catch (error) {
       lastError = new UpstreamError('เชื่อมต่อ Roblox API ไม่สำเร็จหรือหมดเวลา', 502, 'UPSTREAM_NETWORK_ERROR');
-      if (attempt === 0) { await new Promise((resolve) => setTimeout(resolve, retryDelay({ headers: new Headers() }, attempt))); continue; }
+      if (attempt + 1 < attempts) { await new Promise((resolve) => setTimeout(resolve, retryDelay({ headers: new Headers() }, attempt))); continue; }
       break;
     }
-    if ((response.status === 429 || response.status >= 500) && attempt === 0) {
+    if ((response.status === 429 || response.status >= 500) && attempt + 1 < attempts) {
       lastError = new UpstreamError(response.status === 429 ? 'Roblox API จำกัดอัตราการเรียก กรุณารอสักครู่' : `Roblox API ตอบกลับ ${response.status}`, response.status === 429 ? 429 : 502, response.status === 429 ? 'ROBLOX_RATE_LIMITED' : 'ROBLOX_UPSTREAM_ERROR');
-      await new Promise((resolve) => setTimeout(resolve, retryDelay(response, attempt)));
+      const delay = retryDelay(response, attempt);
+      if (delay > 2500) throw lastError;
+      await new Promise((resolve) => setTimeout(resolve, delay));
       continue;
     }
     if (!response.ok) {
@@ -94,7 +96,7 @@ async function mapWithConcurrency(items, limit, mapper) {
   return results;
 }
 async function resolveUniverse(placeId) {
-  const data = await fetchPublicJson(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`);
+  const data = await fetchPublicJson(`https://apis.roblox.com/universes/v1/places/${encodeURIComponent(placeId)}/universe`, { timeout: 4000, attempts: 1 });
   const universeId = positivePlaceId(data && data.universeId);
   if (!universeId) throw new UpstreamError('ไม่สามารถแปลง Place ID เป็น Universe ID ได้', 404, 'UNIVERSE_NOT_FOUND');
   return universeId;
@@ -133,16 +135,19 @@ async function getGames(placeIds, env) {
   const universeIds = [...new Set(valid.map((item) => item.universeId))];
   let details = [];
   try {
-    const detailData = await fetchPublicJson(`https://games.roblox.com/v1/games?universeIds=${universeIds.map(encodeURIComponent).join(',')}`);
+    const detailData = await fetchPublicJson(`https://games.roblox.com/v1/games?universeIds=${universeIds.map(encodeURIComponent).join(',')}`, { timeout: 4000 });
     details = Array.isArray(detailData && detailData.data) ? detailData.data : [];
   } catch (error) {
-    return placeIds.map((placeId) => ({ ok: false, placeId, error: error.message || 'ดึงรายละเอียดเกมไม่สำเร็จ', code: error.code || 'GAME_DETAILS_ERROR' }));
+    return placeIds.map((placeId) => {
+      const failure = resolveErrors.get(placeId) || error;
+      return { ok: false, placeId, error: failure.message || 'ดึงรายละเอียดเกมไม่สำเร็จ', code: failure.code || 'GAME_DETAILS_ERROR' };
+    });
   }
   const detailByUniverse = new Map(details.map((item) => [String(item.id), item]));
 
   let thumbnailByUniverse = new Map();
   try {
-    const thumbnails = await fetchPublicJson(`https://thumbnails.roblox.com/v1/games/icons?universeIds=${universeIds.map(encodeURIComponent).join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false`);
+    const thumbnails = await fetchPublicJson(`https://thumbnails.roblox.com/v1/games/icons?universeIds=${universeIds.map(encodeURIComponent).join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png&isCircular=false`, { timeout: 2000, attempts: 1 });
     const items = Array.isArray(thumbnails && thumbnails.data) ? thumbnails.data : [];
     thumbnailByUniverse = new Map(items.map((item) => [String(item.targetId), item.imageUrl || '']));
   } catch (error) {
