@@ -3,15 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f1f3d">
+  <meta name="theme-color" content="#19242c">
   <meta name="description" content="Roblox Game Monitor — ติดตามหลายเกมพร้อมกัน เปรียบเทียบจำนวนผู้เล่น และดูประวัติย้อนหลังจากข้อมูลสาธารณะของ Roblox">
   <title>Roblox Game Monitor</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
 </head>
@@ -20,18 +17,18 @@
   <div class="shell">
     <aside class="side" aria-label="เมนูหลัก">
       <a class="brand" href="#/overview" aria-label="Roblox Game Monitor หน้าภาพรวม">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18V9M10 18V5M16 18v-7M22 18H2" /></svg></span>
-        <span class="brand-text"><strong>Game Monitor</strong><small>สำหรับ Roblox Experiences</small></span>
+        <img class="brand-mark" width="36" height="36" src="/favicon.svg" alt="">
+        <span class="brand-text"><strong>Game Monitor</strong><small>Roblox Experiences</small></span>
       </a>
       <nav class="side-nav">
-        <a class="nav-item" href="#/overview" data-nav="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>ภาพรวมทุกเกม</span><b class="nav-badge" id="navGameCount">0</b></a>
-        <a class="nav-item" href="#/compare" data-nav="compare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m6 15 4-5 3 3 5-7"/></svg><span>เปรียบเทียบเกม</span></a>
+        <a class="nav-item" href="#/overview" data-nav="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>ภาพรวม</span><b class="nav-badge" id="navGameCount">0</b></a>
+        <a class="nav-item" href="#/compare" data-nav="compare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m6 15 4-5 3 3 5-7"/></svg><span>เปรียบเทียบ</span></a>
         <a class="nav-item" href="#/events" data-nav="events"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>การแจ้งเตือน</span><b class="nav-badge hidden" id="navEventCount">0</b></a>
-        <a class="nav-item" href="#/policy" data-nav="policy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span>ขอบเขตและนโยบายข้อมูล</span></a>
+        <a class="nav-item" href="#/policy" data-nav="policy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg><span>นโยบายข้อมูล</span></a>
       </nav>
       <div class="side-foot">
         <div class="side-status"><i class="dot" id="systemDot"></i><span id="systemText">กำลังตรวจสอบระบบ</span></div>
-        <div class="side-meta"><span id="storageMode">ตรวจสอบที่เก็บข้อมูล…</span><span>เวอร์ชัน <span id="appVersion">2.2.0</span></span></div>
+        <div class="side-meta"><span id="storageMode">ตรวจสอบที่เก็บข้อมูล…</span><span>เวอร์ชัน <span id="appVersion">2.3.0</span></span></div>
       </div>
     </aside>
 
@@ -40,7 +37,7 @@
         <form id="gameForm" class="add-form" autocomplete="off">
           <label class="field" for="placeId">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            <input id="placeId" name="placeId" inputmode="text" placeholder="วาง Place ID หรือลิงก์เกม Roblox เพื่อเพิ่มเกม" aria-label="Place ID หรือลิงก์เกม Roblox">
+            <input id="placeId" name="placeId" inputmode="text" placeholder="Place ID หรือลิงก์เกม Roblox" aria-label="Place ID หรือลิงก์เกม Roblox">
           </label>
           <button id="checkBtn" class="btn btn-primary" type="submit"><span class="btn-label">เพิ่มเกม</span></button>
         </form>

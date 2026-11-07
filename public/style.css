@@ -1,3 +1,68 @@
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./fonts/ibm-plex-sans-thai-thai-400-normal.woff2) format('woff2');
+  unicode-range: U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./fonts/ibm-plex-sans-thai-latin-400-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./fonts/ibm-plex-sans-thai-thai-500-normal.woff2) format('woff2');
+  unicode-range: U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./fonts/ibm-plex-sans-thai-latin-500-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./fonts/ibm-plex-sans-thai-thai-600-normal.woff2) format('woff2');
+  unicode-range: U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./fonts/ibm-plex-sans-thai-latin-600-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./fonts/ibm-plex-sans-thai-thai-700-normal.woff2) format('woff2');
+  unicode-range: U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Thai';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./fonts/ibm-plex-sans-thai-latin-700-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
 :root {
   --navy: #0f1f3d;
   --navy-2: #172c52;
@@ -131,7 +196,7 @@ main { padding: 24px 32px 8px; flex: 1; outline: 0; }
 
 /* table */
 .table-panel { padding: 0; overflow: hidden; }
-.table-scroll { overflow-x: auto; }
+.table-scroll { position: relative; overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; min-width: 860px; }
 .data-table.compact { min-width: 560px; }
 .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
@@ -299,4 +364,66 @@ main { padding: 24px 32px 8px; flex: 1; outline: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Operations dashboard */
+:root {
+  --navy: #19242c; --navy-2: #2c3b46; --navy-line: #3c505d;
+  --navy-text: #c8d4d9; --bg: #f3f5f5; --line: #dce3e3;
+  --ink: #182931; --muted: #556870; --brand: #a23e13;
+  --brand-hover: #81300e; --brand-soft: #fff0e5; --radius: 14px;
+}
+.brand { padding-bottom: 26px; }
+.brand-text strong { font-size: 18px; letter-spacing: -.025em; }
+.brand-text small, .side-meta { color: #bccace; }
+.nav-item { padding-block: 12px; }
+.nav-item.active { box-shadow: inset 3px 0 #ff995a; }
+.nav-item.active svg { color: #ffae7b; }
+h1 { font-size: clamp(24px, 2.25vw, 34px); letter-spacing: -.035em; }
+.view-head { align-items: center; margin-bottom: 22px; }
+.kpis { gap: 12px; border: 0; background: transparent; box-shadow: none; }
+.kpis > .kpi { border: 1px solid var(--line); border-radius: var(--radius); background: white; padding: 18px; gap: 6px; align-content: start; }
+.kpis > .kpi:first-child { background: #20313a; border-color: #20313a; }
+.kpi:first-child .kpi-value { color: #fff; }
+.kpi:first-child .kpi-label, .kpi:first-child .kpi-note { color: #cbd8da; }
+.kpi-value { font-size: clamp(26px, 2.4vw, 36px); font-weight: 650; }
+.kpi-note { white-space: normal; overflow-wrap: anywhere; }
+.empty {
+  background-color: #fff;
+  background-image: radial-gradient(#dce3e3 1px, transparent 1px);
+  background-size: 19px 19px;
+  padding: clamp(42px, 8vw, 96px) 20px; gap: 12px;
+}
+.empty h2 { font-size: clamp(21px, 2vw, 28px); }
+.empty p { max-width: 43ch; }
+.empty .btn { margin-top: 6px; }
+.empty-symbol { width: 62px; height: 62px; padding: 15px; background: #24343c; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 3px; margin-bottom: 6px; }
+.empty-symbol i { width: 4px; height: 12px; border-radius: 2px; background: #ffab73; }
+.empty-symbol i:nth-child(even) { height: 23px; }
+.empty-symbol i:nth-child(3) { height: 32px; }
+.game-head-text, .event-copy, .view-head > div, .panel-head > div { min-width: 0; }
+.game-head-text h1, .legend-item { overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .side { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .brand { padding: 0; }
+  .side-foot { display: block; grid-row: 1; grid-column: 2; margin: 0; border: 0; padding: 0; }
+  .side-meta { display: none; }
+  .side-nav { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 3px; }
+  .nav-item { justify-content: center; gap: 4px; text-align: center; padding: 9px 2px; }
+  .nav-badge { margin: 0; padding: 0 4px; min-width: 16px; }
+  .nav-item.active { box-shadow: inset 0 -2px #ff995a; }
+}
+@media (max-width: 560px) {
+  .side { padding-inline: 10px; }
+  .nav-item span:not(.nav-badge) { font-size: 12px; }
+  .kpis { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .kpis > .kpi { padding: 12px; }
+  .view-tools { gap: 8px; }
+  .view-tools .label { font-size: 12px; }
+  .game-head { flex-wrap: wrap; }
+  .game-head-actions { flex-wrap: wrap; }
+  .top { gap: 8px; }
+  .top-tools { justify-content: flex-end; }
+  .countdown { margin-right: auto; min-width: 0; }
 }
